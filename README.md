@@ -32,7 +32,8 @@ Philippine higher education research productivity has undergone significant stru
 | **Wide-to-Long Transformation** | Converts institutional reporting format to analysis-ready schema |
 | **Adaptive Forecasting** | Dynamically selects between Holt's Linear Trend and SMA based on data density |
 | **Period-Based Analysis** | Visualizes data across Pre-Pandemic, During, Post-Pandemic, and Forecast phases |
-| **Geospatial Visualization** | Interactive Philippine map showing regional research output |
+| **Geospatial Visualization** | Interactive Philippine map with Yearly Slider and Period Evolution animated views |
+| **Executive Report** | Jupyter notebook with methodology documentation and stakeholder-ready outputs |
 | **Excel Export** | Complete dataset export with period-based worksheets |
 
 ### Technology Stack
@@ -42,8 +43,9 @@ Philippine higher education research productivity has undergone significant stru
 | Dependency Management | `uv` | Reproducible Python environments via lockfile |
 | Data Processing | `pandas` + `openpyxl` | DataFrame operations and Excel I/O |
 | Forecasting Engine | `statsmodels` | Holt's Exponential Smoothing implementation |
-| Visualization | `plotly` | Interactive time-series and geographic charts |
+| Visualization | `plotly` + `kaleido` | Interactive charts and static image export |
 | Dashboard | `streamlit` | Web-based analytical interface |
+| Reporting | `jupyter` + `nbformat` | Executive report notebooks |
 
 ---
 
@@ -263,10 +265,18 @@ The Streamlit dashboard (`app.py`) provides an interactive interface for explori
 - Dashed lines indicate forecasted values
 
 #### 🗺️ Geospatial Analysis
-- Interactive bubble map of the Philippines
-- Color-coded by metric value intensity
-- Year slider (2015–2035) for temporal navigation
-- Regional summary with top 5 regions
+
+**View Mode Toggle:**
+| Mode | Description |
+|------|-------------|
+| **Yearly Slider** | View single-year regional distribution with slider navigation (2015–2035) |
+| **Period Evolution** | Animated bubble map showing evolution across all 5 strategic periods |
+
+**Period Evolution Features:**
+- Animated transitions through Pre-Pandemic → During → Post → Forecast Phase 1 → Forecast Phase 2
+- Play/Pause controls and period slider
+- Fixed color scale for consistent interpretation across periods
+- Uses average annual values (not totals) for fair comparison between periods of different lengths
 
 #### 📊 Period Comparison
 - Bar chart comparing totals across all 5 periods
@@ -289,6 +299,25 @@ The dashboard includes a **Download Excel Report** button that generates a compr
 | Forecast Phase 2 (2031-2035) | Second 5-year forecast |
 | Summary by Region | Aggregated statistics |
 
+### Executive Report Notebook
+
+A standalone Jupyter notebook (`reports/HEI_Executive_Report.ipynb`) provides a stakeholder-ready document with:
+
+| Section | Content |
+|---------|----------|
+| Abstract | Strategic overview of the analysis |
+| Methodology | Pandemic structural break rationale + Holt's equation |
+| National Overview | Period summary tables with styling |
+| Geospatial Analysis | Animated regional evolution maps |
+| Strategic Outlook | 2026–2035 projection summary |
+| Excel Export | Generates `HEI_Research_Report_Data.xlsx` |
+
+**Running the Report:**
+```bash
+cd reports
+uv run jupyter notebook HEI_Executive_Report.ipynb
+```
+
 ---
 
 ## 6. Repository Structure
@@ -304,6 +333,10 @@ publication-forecast-project/
 │       ├── clean_metrics.parquet              # ETL output
 │       └── forecasts.parquet                  # Final dataset with projections
 │
+├── reports/
+│   ├── HEI_Executive_Report.ipynb            # Stakeholder-ready Jupyter report
+│   └── HEI_Research_Report_Data.xlsx         # Generated Excel export (after running notebook)
+│
 ├── src/
 │   ├── etl.py              # Excel parsing with multi-header support
 │   │                       # Functions: load_raw_data(), melt_to_long_format()
@@ -313,7 +346,8 @@ publication-forecast-project/
 │   │                       # Includes discrete rounding for count metrics
 │   │
 │   └── viz_utils.py        # Geographic utilities and Plotly helpers
-│                           # Contains: REGION_COORDINATES, plot_philippine_map()
+│                           # Contains: REGION_COORDINATES, plot_philippine_map(),
+│                           # plot_period_geospatial_comparison(), assign_period()
 │
 ├── app.py                  # Streamlit dashboard entry point
 │                           # Features: ALL filters, period comparison, geospatial map, Excel export
@@ -333,9 +367,10 @@ publication-forecast-project/
 |--------|------------------------|-------------|
 | `src/etl.py` | Data ingestion and transformation | `load_and_transform()` |
 | `src/forecasting.py` | Time-series model application | `run_forecasting_pipeline()`, `DISCRETE_METRICS` |
-| `src/viz_utils.py` | Philippine geographic constants and maps | `REGION_COORDINATES`, `plot_philippine_map()` |
+| `src/viz_utils.py` | Philippine geographic constants and maps | `REGION_COORDINATES`, `plot_philippine_map()`, `plot_period_geospatial_comparison()`, `assign_period()` |
 | `app.py` | User interface, visualization, and export | Streamlit application |
 | `main.py` | Pipeline orchestration | CLI entry point |
+| `reports/HEI_Executive_Report.ipynb` | Stakeholder documentation | Executable report with Excel export |
 
 ---
 

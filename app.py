@@ -12,7 +12,7 @@ import plotly.graph_objects as go
 from pathlib import Path
 from io import BytesIO
 
-from src.viz_utils import plot_philippine_map
+from src.viz_utils import plot_philippine_map, plot_period_geospatial_comparison
 
 
 # === Constants ===
@@ -399,56 +399,83 @@ def main():
         display_metric = selected_metric if selected_metric != "All Metrics" else "Publication Quantity"
         st.subheader(f"🗺️ Regional {display_metric} Distribution")
         
-        # Year slider for map
-        min_year = int(df["Year"].min())
-        max_year = int(df["Year"].max())
-        
-        map_year = st.slider(
-            "📅 Select Year",
-            min_value=min_year,
-            max_value=max_year,
-            value=min(2025, max_year),
-            step=1,
-            help="Slide to view regional distribution for different years"
+        # View mode toggle
+        view_mode = st.radio(
+            "📊 View Mode",
+            ["Yearly Slider", "Period Evolution"],
+            horizontal=True,
+            help="Yearly Slider: View one year at a time. Period Evolution: Animated comparison across all 5 strategic periods."
         )
         
-        # Determine period for the selected year
-        year_period = "Unknown"
-        for period_name, (start, end) in PERIODS.items():
-            if start <= map_year <= end:
-                year_period = period_name
-                break
-        
-        # Year type indicator
-        if map_year <= 2025:
-            st.info(f"📊 **Historical Data** for {map_year} | Period: {year_period}")
-        else:
-            st.warning(f"🔮 **Forecasted Data** for {map_year} | Period: {year_period}")
-        
-        # Render the map
-        with st.spinner("Loading map..."):
-            map_fig = plot_philippine_map(
-                df,
-                year=map_year,
-                metric=display_metric,
-                title=f"{display_metric} by Region ({map_year})"
+        if view_mode == "Yearly Slider":
+            # Original yearly slider implementation
+            min_year = int(df["Year"].min())
+            max_year = int(df["Year"].max())
+            
+            map_year = st.slider(
+                "📅 Select Year",
+                min_value=min_year,
+                max_value=max_year,
+                value=min(2025, max_year),
+                step=1,
+                help="Slide to view regional distribution for different years"
             )
-            st.plotly_chart(map_fig, use_container_width=True)
+            
+            # Determine period for the selected year
+            year_period = "Unknown"
+            for period_name, (start, end) in PERIODS.items():
+                if start <= map_year <= end:
+                    year_period = period_name
+                    break
+            
+            # Year type indicator
+            if map_year <= 2025:
+                st.info(f"📊 **Historical Data** for {map_year} | Period: {year_period}")
+            else:
+                st.warning(f"🔮 **Forecasted Data** for {map_year} | Period: {year_period}")
+            
+            # Render the map
+            with st.spinner("Loading map..."):
+                map_fig = plot_philippine_map(
+                    df,
+                    year=map_year,
+                    metric=display_metric,
+                    title=f"{display_metric} by Region ({map_year})"
+                )
+                st.plotly_chart(map_fig, use_container_width=True)
+            
+            # Regional summary for selected year
+            st.markdown("##### Regional Summary (Top 5)")
+            regional_summary = df[
+                (df["Year"] == map_year) & (df["Metric"] == display_metric)
+            ].groupby("Region")["Value"].sum().sort_values(ascending=False).head(5)
+            
+            if not regional_summary.empty:
+                col1, col2 = st.columns([2, 1])
+                with col1:
+                    st.bar_chart(regional_summary)
+                with col2:
+                    st.dataframe(regional_summary.reset_index().rename(
+                        columns={"Region": "Region", "Value": display_metric}
+                    ), use_container_width=True)
         
-        # Regional summary for selected year
-        st.markdown("##### Regional Summary (Top 5)")
-        regional_summary = df[
-            (df["Year"] == map_year) & (df["Metric"] == display_metric)
-        ].groupby("Region")["Value"].sum().sort_values(ascending=False).head(5)
-        
-        if not regional_summary.empty:
-            col1, col2 = st.columns([2, 1])
-            with col1:
-                st.bar_chart(regional_summary)
-            with col2:
-                st.dataframe(regional_summary.reset_index().rename(
-                    columns={"Region": "Region", "Value": display_metric}
-                ), use_container_width=True)
+        else:
+            # Period Evolution - animated bubble map
+            st.info("🎬 **Period Evolution View**: Animated comparison across all 5 strategic periods. "
+                   "Use the Play button or slider to navigate through periods.")
+            
+            with st.spinner("Generating animated map..."):
+                period_fig = plot_period_geospatial_comparison(df, display_metric)
+                st.plotly_chart(period_fig, use_container_width=True)
+            
+            st.markdown("""
+            **Period Definitions:**
+            - **Pre-Pandemic (2015-2019):** Baseline research productivity
+            - **During Pandemic (2020-2022):** COVID-19 impact period
+            - **Post-Pandemic (2023-2025):** Recovery phase
+            - **Forecast Phase 1 (2026-2030):** Near-term projection
+            - **Forecast Phase 2 (2031-2035):** Long-term projection
+            """)
     
     with analysis_tab3:
         st.subheader("📊 Period-Based Comparison")

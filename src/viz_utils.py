@@ -283,3 +283,176 @@ def plot_philippine_map(
     )
     
     return fig
+
+
+# === Period Definitions ===
+PERIOD_RANGES = {
+    "Pre-Pandemic (2015-2019)": (2015, 2019),
+    "During Pandemic (2020-2022)": (2020, 2022),
+    "Post-Pandemic (2023-2025)": (2023, 2025),
+    "Forecast Phase 1 (2026-2030)": (2026, 2030),
+    "Forecast Phase 2 (2031-2035)": (2031, 2035),
+}
+
+PERIOD_ORDER = [
+    "Pre-Pandemic (2015-2019)",
+    "During Pandemic (2020-2022)",
+    "Post-Pandemic (2023-2025)",
+    "Forecast Phase 1 (2026-2030)",
+    "Forecast Phase 2 (2031-2035)",
+]
+
+
+def assign_period(year: int) -> str:
+    """Map a year to its corresponding strategic period.
+    
+    Args:
+        year: Year value (2015-2035)
+        
+    Returns:
+        Period name string
+    """
+    for period_name, (start, end) in PERIOD_RANGES.items():
+        if start <= year <= end:
+            return period_name
+    return "Unknown"
+
+
+def plot_period_geospatial_comparison(
+    df: pd.DataFrame,
+    metric_name: str
+) -> go.Figure:
+    """Create an animated Bubble Map showing metric evolution across 5 strategic periods.
+    
+    Uses average annual value (not sum) to ensure fair comparison between
+    periods of different lengths (3-year vs 5-year).
+    
+    Args:
+        df: DataFrame with columns ['Region Code', 'Region', 'Year', 'Metric', 'Value']
+        metric_name: Metric to visualize (e.g., 'Publication Quantity')
+        
+    Returns:
+        Plotly figure with animation controls
+    """
+    # Filter by metric
+    filtered = df[df["Metric"] == metric_name].copy()
+    
+    if filtered.empty:
+        fig = go.Figure()
+        fig.update_layout(
+            title=f"No data available for {metric_name}",
+            template="plotly_dark"
+        )
+        return fig
+    
+    # Add Period column
+    filtered["Period"] = filtered["Year"].apply(assign_period)
+    
+    # Aggregate: Average annual value per Region per Period
+    # This ensures fair comparison between 3-year and 5-year periods
+    geo_df = (
+        filtered
+        .groupby(["Region Code", "Region", "Period"], as_index=False, observed=False)["Value"]
+        .mean()
+    )
+    
+    # Handle NaN values - fill with 0 and filter out zeros for cleaner visualization
+    geo_df["Value"] = geo_df["Value"].fillna(0)
+    geo_df = geo_df[geo_df["Value"] > 0]  # Remove regions with no data
+    
+    if geo_df.empty:
+        fig = go.Figure()
+        fig.update_layout(
+            title=f"No valid data available for {metric_name}",
+            template="plotly_dark"
+        )
+        return fig
+    
+    # Add coordinates
+    geo_df["lat"] = geo_df["Region Code"].apply(
+        lambda x: REGION_COORDINATES.get(x, PH_CENTER)["lat"]
+    )
+    geo_df["lon"] = geo_df["Region Code"].apply(
+        lambda x: REGION_COORDINATES.get(x, PH_CENTER)["lon"]
+    )
+    geo_df["region_name"] = geo_df["Region Code"].apply(
+        lambda x: REGION_COORDINATES.get(x, {"name": x}).get("name", x)
+    )
+    
+    # Calculate global max for fixed color scale
+    max_value = geo_df["Value"].max()
+    
+    # Create animated scatter mapbox
+    fig = px.scatter_mapbox(
+        geo_df,
+        lat="lat",
+        lon="lon",
+        size="Value",
+        color="Value",
+        hover_name="region_name",
+        hover_data={"Region Code": True, "Value": ":.1f", "lat": False, "lon": False},
+        animation_frame="Period",
+        category_orders={"Period": PERIOD_ORDER},
+        zoom=PH_DEFAULT_ZOOM,
+        center=PH_CENTER,
+        mapbox_style="carto-darkmatter",
+        title=f"Regional Evolution of {metric_name} (Annual Average)",
+        color_continuous_scale=[
+            [0, "#2E4057"],      # Dark blue
+            [0.25, "#4ECDC4"],   # Teal
+            [0.5, "#FFE66D"],    # Yellow
+            [0.75, "#FF6B6B"],   # Coral
+            [1, "#C44536"]       # Red
+        ],
+        range_color=[0, max_value],  # Fixed scale across all periods
+        size_max=50,
+    )
+    
+    # Premium styling
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="#0E1117",
+        height=650,
+        title=dict(
+            font=dict(size=18, color="#4ECDC4"),
+            x=0.5,
+            xanchor="center"
+        ),
+        coloraxis_colorbar=dict(
+            title=dict(text=f"Avg {metric_name}", font=dict(size=12)),
+            thickness=15,
+            len=0.7,
+        ),
+        margin=dict(l=0, r=0, t=60, b=0),
+        # Animation settings
+        updatemenus=[dict(
+            type="buttons",
+            showactive=False,
+            y=0,
+            x=0.1,
+            xanchor="right",
+            buttons=[
+                dict(label="▶ Play",
+                     method="animate",
+                     args=[None, {"frame": {"duration": 1500, "redraw": True},
+                                  "fromcurrent": True}]),
+                dict(label="⏸ Pause",
+                     method="animate",
+                     args=[[None], {"frame": {"duration": 0, "redraw": False},
+                                    "mode": "immediate"}])
+            ]
+        )]
+    )
+    
+    # Update slider styling
+    if fig.layout.sliders:
+        fig.layout.sliders[0].update(
+            currentvalue=dict(
+                prefix="Period: ",
+                font=dict(size=14, color="#4ECDC4")
+            ),
+            len=0.8,
+            x=0.1,
+        )
+    
+    return fig
