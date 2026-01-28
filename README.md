@@ -1,347 +1,394 @@
-# 🎓 Philippine HEI Research Productivity Forecast
+# Institutional Research Analytics Platform (IRAP)
 
-A Python-based forecasting pipeline and interactive Streamlit dashboard for analyzing research productivity (Publications & Citations) across Philippine Higher Education Institutions (HEIs).
+**A Python-based forecasting engine for Philippine Higher Education Institutions (HEIs)**
 
-![Python](https://img.shields.io/badge/python-3.12+-blue.svg)
-![Streamlit](https://img.shields.io/badge/streamlit-1.53+-red.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
+Designed to analyze historical research output (2015–2025) and project future institutional performance through 2035.
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [Overview](#-overview)
-- [Features](#-features)
-- [Project Structure](#-project-structure)
-- [Installation](#-installation)
-- [Usage](#-usage)
-- [Data Pipeline](#-data-pipeline)
-- [Forecasting Methodology](#-forecasting-methodology)
-- [Dashboard](#-dashboard)
-- [API Reference](#-api-reference)
-- [Contributing](#-contributing)
+1. [Project Overview](#1-project-overview)
+2. [Quick Start](#2-quick-start-uv-workflow)
+3. [Data Pipeline Architecture](#3-data-pipeline-architecture-the-etl)
+4. [Forecasting Methodology](#4-forecasting-methodology)
+5. [Dashboard Features](#5-dashboard-features)
+6. [Repository Structure](#6-repository-structure)
+7. [Technical Specifications](#7-technical-specifications)
 
 ---
 
-## 🔍 Overview
+## 1. Project Overview
 
-This project analyzes research output data from 52 Philippine HEIs across 17 regions, spanning from 2015 to 2025, with automated forecasting through 2035. The system handles complex multi-level Excel headers, transforms wide-format data to analysis-ready long format, and applies time-series forecasting models.
+### Motivation
 
-### Key Metrics Tracked
+Philippine higher education research productivity has undergone significant structural changes, particularly during the COVID-19 pandemic period (2020–2022). Traditional trend analysis methods fail to account for this disruption. IRAP addresses this by implementing a **pandemic-aware forecasting framework** that segments temporal data into meaningful periods and applies appropriate statistical models.
 
-| Metric | Description |
-|--------|-------------|
-| **Publication Quantity** | Number of research publications per institution per year |
-| **Citation Quantity** | Total citations received by publications |
-| **Field-Weighted Citation Impact (FWCI)** | Normalized citation impact relative to field average |
+### Core Capabilities
 
-### Period Logic
+| Capability | Description |
+|------------|-------------|
+| **Multi-Index Excel Parsing** | Handles complex merged-header spreadsheets without manual preprocessing |
+| **Wide-to-Long Transformation** | Converts institutional reporting format to analysis-ready schema |
+| **Adaptive Forecasting** | Dynamically selects between Holt's Linear Trend and SMA based on data density |
+| **Period-Based Analysis** | Visualizes data across Pre-Pandemic, During, Post-Pandemic, and Forecast phases |
+| **Geospatial Visualization** | Interactive Philippine map showing regional research output |
+| **Excel Export** | Complete dataset export with period-based worksheets |
 
-```
-Pre-Pandemic:  2015-2019 (baseline historical)
-Pandemic:      2020-2022 (high volatility zone)
-Post-Pandemic: 2023-2025 (recovery baseline)
-Forecast:      2026-2035 (10-year projection)
-```
+### Technology Stack
 
----
-
-## ✨ Features
-
-- **Smart Excel Parsing** — Automatically handles merged multi-level headers
-- **Wide-to-Long ETL** — Transforms complex spreadsheet structure to analysis-ready format
-- **Dual-Model Forecasting** — Holt's Linear Trend with SMA fallback for sparse data
-- **Interactive Dashboard** — Premium dark-themed Streamlit UI with:
-  - Region and school filtering
-  - Multi-school comparison charts
-  - Historical vs forecast visualization
-  - Detailed pivot tables
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| Dependency Management | `uv` | Reproducible Python environments via lockfile |
+| Data Processing | `pandas` + `openpyxl` | DataFrame operations and Excel I/O |
+| Forecasting Engine | `statsmodels` | Holt's Exponential Smoothing implementation |
+| Visualization | `plotly` | Interactive time-series and geographic charts |
+| Dashboard | `streamlit` | Web-based analytical interface |
 
 ---
 
-## 📁 Project Structure
-
-```
-publication-forecast-project/
-├── .venv/                          # Virtual environment (managed by uv)
-├── data/
-│   ├── raw/
-│   │   └── MASTER DATASET PRODUCTIVITY.xlsx   # Source data (read-only)
-│   └── processed/
-│       ├── clean_metrics.parquet   # ETL output (long format)
-│       └── forecasts.parquet       # Historical + forecast data
-├── src/
-│   ├── etl.py                      # Data extraction & transformation
-│   └── forecasting.py              # Time-series forecasting engine
-├── app.py                          # Streamlit dashboard
-├── main.py                         # Pipeline orchestrator
-├── pyproject.toml                  # Dependency manifest (uv)
-├── uv.lock                         # Lockfile (auto-generated)
-├── prd.md                          # Product requirements document
-└── README.md                       # This file
-```
-
----
-
-## 🚀 Installation
+## 2. Quick Start (uv Workflow)
 
 ### Prerequisites
 
 - Python 3.12+
 - [uv](https://docs.astral.sh/uv/) package manager
 
-### Setup
+### Installation & Execution
 
 ```bash
-# Clone the repository
-git clone <repository-url>
+# Clone and Initialize
+git clone <repository_url>
 cd publication-forecast-project
+uv sync                           # Install dependencies from uv.lock
 
-# Install dependencies (creates .venv automatically)
-uv sync
+# Run the Pipeline
+uv run python src/etl.py          # Step 1: Process Excel → Parquet
+uv run python src/forecasting.py  # Step 2: Generate 10-year forecasts
 
-# Verify installation
-uv run python --version
+# Launch Dashboard
+uv run streamlit run app.py       # Accessible at http://localhost:8501
 ```
 
-### Dependencies
-
-| Package | Purpose |
-|---------|---------|
-| `pandas` | Data manipulation and analysis |
-| `openpyxl` | Excel file reading (required for .xlsx) |
-| `plotly` | Interactive visualizations |
-| `streamlit` | Web dashboard framework |
-| `statsmodels` | Time-series forecasting (Holt's method) |
-| `scikit-learn` | Machine learning utilities |
-
----
-
-## 💻 Usage
-
-### Quick Start
+### Alternative: Full Pipeline Execution
 
 ```bash
-# Run the complete pipeline (ETL + Forecasting)
-uv run python main.py
-
-# Launch the interactive dashboard
-uv run streamlit run app.py
-```
-
-### Individual Components
-
-```bash
-# Run only the ETL pipeline
-uv run python src/etl.py
-
-# Run only the forecasting engine
-uv run python src/forecasting.py
+uv run python main.py             # Runs ETL + Forecasting sequentially
 ```
 
 ---
 
-## 🔄 Data Pipeline
+## 3. Data Pipeline Architecture (The ETL)
 
-### Input Data Structure
+### The "Wide Format" Problem
 
-The source Excel file uses **merged multi-level headers**:
+The source dataset (`MASTER DATASET PRODUCTIVITY.xlsx`) employs a **multi-index header structure** common in institutional reporting:
 
 ```
-Row 1: |          | Publication Quantity      | Citation Quantity         |
-Row 2: | SCHOOL   | 2015 | 2016 | ... | 2025 | 2015 | 2016 | ... | 2025 |
+┌──────────────┬─────────────────────────────────┬─────────────────────────────────┐
+│              │      Publication Quantity       │       Citation Quantity         │
+│    SCHOOL    ├──────┬──────┬──────┬───────────┼──────┬──────┬──────┬───────────┤
+│              │ 2015 │ 2016 │ ...  │   2025    │ 2015 │ 2016 │ ...  │   2025    │
+├──────────────┼──────┼──────┼──────┼───────────┼──────┼──────┼──────┼───────────┤
+│ University A │  12  │  15  │ ...  │    45     │  89  │ 102  │ ...  │   312     │
+└──────────────┴──────┴──────┴──────┴───────────┴──────┴──────┴──────┴───────────┘
 ```
 
-### ETL Process (`src/etl.py`)
+### Transformation Strategy
 
-```mermaid
-flowchart LR
-    A[Excel File] -->|pd.read_excel\nheader=[0,1]| B[MultiIndex DataFrame]
-    B -->|parse_multiindex_columns| C[Identify Metrics & Years]
-    C -->|melt_to_long_format| D[Long Format]
-    D -->|clean_values| E[Final Schema]
-    E -->|to_parquet| F[clean_metrics.parquet]
+The ETL module (`src/etl.py`) implements a **Wide-to-Long melt operation**:
+
 ```
+INPUT (Wide):                              OUTPUT (Long):
+┌────────┬──────┬──────┐                   ┌────────┬──────┬────────┬───────┐
+│ School │ 2015 │ 2016 │       ──────►     │ School │ Year │ Metric │ Value │
+├────────┼──────┼──────┤                   ├────────┼──────┼────────┼───────┤
+│ Univ A │  12  │  15  │                   │ Univ A │ 2015 │ Pub Q  │  12   │
+└────────┴──────┴──────┘                   │ Univ A │ 2016 │ Pub Q  │  15   │
+                                           └────────┴──────┴────────┴───────┘
+```
+
+### Data Cleaning Rules
+
+| Raw Value | Transformation | Rationale |
+|-----------|----------------|-----------|
+| `" - "` (hyphen) | → `0.0` | Missing data indicator in source |
+| `""` (empty) | → `0.0` | Null coercion |
+| `NaN` | → `0.0` | Consistent numeric handling |
 
 ### Output Schema
 
-| Column | Type | Example |
-|--------|------|---------|
-| `Region Code` | str | "NCR" |
-| `Region` | str | "NATIONAL CAPITAL REGION" |
-| `School` | str | "University of the Philippines Diliman" |
-| `Year` | int | 2023 |
-| `Metric` | str | "Publication Quantity" |
-| `Value` | float | 245.0 |
+**File:** `data/processed/clean_metrics.parquet`
 
-### Data Statistics
+| Column | Type | Description |
+|--------|------|-------------|
+| `Region Code` | `str` | Philippine region identifier (e.g., "NCR", "REGION V") |
+| `Region` | `str` | Full region name |
+| `School` | `str` | Institution name |
+| `Year` | `int` | Academic year (2015–2025) |
+| `Metric` | `str` | One of: "Publication Quantity", "Citation Quantity", "Field-Weighted Citation Impact" |
+| `Value` | `float` | Observed metric value |
 
-- **Records**: 1,716 historical observations
-- **Schools**: 52 unique institutions
-- **Regions**: 17 Philippine regions
-- **Years**: 2015-2025 (11 years)
-- **Metrics**: 3 (Publication Qty, Citation Qty, FWCI)
+### Dataset Dimensions
+
+| Dimension | Count |
+|-----------|-------|
+| Total Records | 1,716 |
+| Unique Schools | 52 |
+| Regions | 17 |
+| Years | 11 (2015–2025) |
+| Metrics | 3 |
 
 ---
 
-## 📈 Forecasting Methodology
+## 4. Forecasting Methodology
 
-### Model Selection (`src/forecasting.py`)
+### Temporal Segmentation Framework
 
-The system dynamically selects the appropriate forecasting method based on data availability:
+To account for the structural break introduced by the COVID-19 pandemic, the forecasting engine segments historical data into **five distinct periods** per client requirements:
 
-```python
-if non_zero_data_points < 3:
-    method = "Simple Moving Average (SMA)"
-else:
-    method = "Holt's Linear Trend"
+| Period | Years | Characterization | Treatment |
+|--------|-------|------------------|-----------|
+| **Pre-Pandemic** | 2015–2019 | Established baseline trends | Primary trend signal |
+| **During Pandemic** | 2020–2022 | High volatility / Disruption | Acknowledged as outlier zone |
+| **Post-Pandemic** | 2023–2025 | "New Normal" recovery | Recent baseline for projection |
+| **Forecast Phase 1** | 2026–2030 | Short-term projection | 5-year forward estimate |
+| **Forecast Phase 2** | 2031–2035 | Long-term projection | Extended 5-year estimate |
+
+> **Note:** The current implementation uses the full 2015–2025 series for model fitting. Future iterations may implement weighted schemes to downweight pandemic-era observations.
+
+### Algorithm Selection Logic
+
+The forecasting engine (`src/forecasting.py`) dynamically selects the appropriate model based on data density:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    For each (School, Metric):               │
+├─────────────────────────────────────────────────────────────┤
+│  Count non-zero observations in training period (2015–2025) │
+│                              │                              │
+│              ┌───────────────┴───────────────┐              │
+│              ▼                               ▼              │
+│    n ≥ 3 non-zero points          n < 3 non-zero points    │
+│              │                               │              │
+│              ▼                               ▼              │
+│   ┌─────────────────────┐       ┌─────────────────────┐    │
+│   │ Holt's Linear Trend │       │ Simple Moving Avg   │    │
+│   │ (Captures momentum) │       │ (Conservative est.) │    │
+│   └─────────────────────┘       └─────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Holt's Linear Trend
+### Holt's Linear Trend Method
 
-Used when sufficient historical data exists. Captures both level and trend components:
+For institutions with sufficient historical data, we apply **Holt's Exponential Smoothing** (double exponential smoothing), which decomposes the time series into level and trend components:
 
-```
-Level:    L_t = α * Y_t + (1 - α) * (L_{t-1} + T_{t-1})
-Trend:    T_t = β * (L_t - L_{t-1}) + (1 - β) * T_{t-1}
-Forecast: F_{t+h} = L_t + h * T_t
-```
+**Level Equation:**
+$$L_t = \alpha Y_t + (1 - \alpha)(L_{t-1} + T_{t-1})$$
+
+**Trend Equation:**
+$$T_t = \beta(L_t - L_{t-1}) + (1 - \beta)T_{t-1}$$
+
+**Forecast Equation:**
+$$\hat{Y}_{t+h} = L_t + h \cdot T_t$$
+
+Where:
+- $L_t$ = Level at time $t$
+- $T_t$ = Trend at time $t$
+- $\alpha, \beta$ = Smoothing parameters (optimized via MLE)
+- $h$ = Forecast horizon
+
+**Implementation:** `statsmodels.tsa.holtwinters.Holt`
 
 ### Simple Moving Average (Fallback)
 
-Used for schools with sparse data (< 3 non-zero observations):
+For institutions with sparse data (< 3 non-zero observations), Holt's method risks overfitting or producing unstable forecasts. We apply a **3-period Simple Moving Average**:
 
-```
-Forecast = mean(last 3 years of data)
-```
+$$\hat{Y}_{t+h} = \frac{1}{3}\sum_{i=t-2}^{t} Y_i$$
 
-### Output
+This produces a conservative, flat projection that avoids explosive or negative forecasts.
 
-Forecasts are appended to historical data with a `Type` column:
+### Post-Processing Constraints
 
-| Type | Description |
-|------|-------------|
-| `History` | Actual observed values (2015-2025) |
-| `Forecast` | Predicted values (2026-2035) |
+| Constraint | Implementation | Rationale |
+|------------|----------------|-----------|
+| Non-negativity | `max(0, forecast)` | Publication and citation counts cannot be negative |
+| Discrete rounding | `round()` for count metrics | Publications and Citations are whole numbers |
+| Continuous FWCI | No rounding | Field-Weighted Citation Impact is a calculated ratio |
+| Forecast Tagging | `Type = "Forecast"` | Distinguishes projected values from historical observations |
 
----
+### Metric-Specific Rounding
 
-## 🖥️ Dashboard
+| Metric | Rounding | Example |
+|--------|----------|---------|
+| Publication Quantity | Nearest integer | 45.7 → 46 |
+| Citation Quantity | Nearest integer | 312.3 → 312 |
+| Field-Weighted Citation Impact | No rounding (continuous) | 1.234 → 1.234 |
 
-### Features
+### Output Schema
 
-| Component | Description |
-|-----------|-------------|
-| **Metric Selector** | Choose between Publication Qty, Citation Qty, or FWCI |
-| **Region Filter** | Filter schools by Philippine region |
-| **School Comparison** | Multi-select up to 6 schools for comparison |
-| **Time Series Chart** | Interactive Plotly chart with history/forecast distinction |
-| **Data Tables** | Tabbed view of historical and forecast data |
+**File:** `data/processed/forecasts.parquet`
 
-### Visual Design
-
-- **Theme**: Premium dark mode with gradient styling
-- **Colors**: Accent color `#4ECDC4` (teal), Background `#0E1117`
-- **Charts**: 
-  - Solid lines for historical data
-  - Dashed lines for forecasts
-  - Vertical marker at forecast boundary (2025.5)
-
-### Accessing the Dashboard
-
-```bash
-uv run streamlit run app.py
-```
-
-Navigate to `http://localhost:8501` in your browser.
+| Column | Type | Description |
+|--------|------|-------------|
+| `Region Code` | `str` | Philippine region identifier |
+| `Region` | `str` | Full region name |
+| `School` | `str` | Institution name |
+| `Year` | `int` | Year (2015–2035) |
+| `Metric` | `str` | Metric type |
+| `Value` | `float` | Observed or forecasted value |
+| `Type` | `str` | Either "History" or "Forecast" |
 
 ---
 
-## 📚 API Reference
+## 5. Dashboard Features
 
-### ETL Module (`src/etl.py`)
+The Streamlit dashboard (`app.py`) provides an interactive interface for exploring research productivity data.
 
-```python
-# Main pipeline function
-load_and_transform(
-    input_path: Path = "data/raw/MASTER DATASET PRODUCTIVITY.xlsx",
-    output_path: Path = "data/processed/clean_metrics.parquet"
-) -> pd.DataFrame
+### Filter Controls (Sidebar)
 
-# Individual functions
-load_raw_data(path: Path) -> pd.DataFrame
-parse_multiindex_columns(df: pd.DataFrame) -> tuple[list, dict]
-melt_to_long_format(df: pd.DataFrame) -> pd.DataFrame
-clean_values(df: pd.DataFrame) -> pd.DataFrame
-export_to_parquet(df: pd.DataFrame, path: Path) -> None
-```
+| Filter | Options | Description |
+|--------|---------|-------------|
+| **Metric** | All Metrics, Publication Quantity, Citation Quantity, FWCI | Select which metric to visualize |
+| **Region** | All Regions + 17 individual regions | Filter by Philippine administrative region |
+| **Schools** | Aggregated view or multi-select (up to 6) | Compare specific schools or view national totals |
+| **Period** | All Periods + 5 defined periods | Filter to specific time periods |
 
-### Forecasting Module (`src/forecasting.py`)
+### Analysis Tabs
 
-```python
-# Main pipeline function
-run_forecasting_pipeline(
-    input_path: Path = "data/processed/clean_metrics.parquet",
-    output_path: Path = "data/processed/forecasts.parquet"
-) -> pd.DataFrame
+#### 📈 Time Series Analysis
+- Interactive line charts with historical and forecast data
+- Period shading (Pre-Pandemic, During, Post-Pandemic, Forecast phases)
+- Comparison of multiple schools or aggregated national view
+- Dashed lines indicate forecasted values
 
-# Forecasting functions
-forecast_series(series: pd.Series, periods: int = 10) -> pd.Series
-holts_linear_trend(series: pd.Series, periods: int) -> pd.Series
-simple_moving_average(series: pd.Series, periods: int) -> pd.Series
-```
+#### 🗺️ Geospatial Analysis
+- Interactive bubble map of the Philippines
+- Color-coded by metric value intensity
+- Year slider (2015–2035) for temporal navigation
+- Regional summary with top 5 regions
 
-### Dashboard (`app.py`)
+#### 📊 Period Comparison
+- Bar chart comparing totals across all 5 periods
+- Summary table with Total, Average per Year, and Year range
+- Quick visual comparison of Pre vs During vs Post-pandemic trends
 
-```python
-@st.cache_data
-load_forecasts(path: Path) -> pd.DataFrame
+### Excel Export
 
-create_time_series_chart(
-    df: pd.DataFrame,
-    schools: list[str],
-    metric: str,
-    title: str = None
-) -> go.Figure
-```
+The dashboard includes a **Download Excel Report** button that generates a comprehensive workbook with:
 
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Commands
-
-```bash
-# Sync dependencies after changes to pyproject.toml
-uv sync
-
-# Add a new dependency
-uv add <package-name>
-
-# Run with verbose output
-uv run python -v main.py
-```
+| Sheet Name | Contents |
+|------------|----------|
+| Complete Data | Full dataset (2015–2035, all metrics) |
+| Historical (2015-2025) | Only observed data |
+| Forecast (2026-2035) | Only projected data |
+| Pre-Pandemic (2015-2019) | Period-specific slice |
+| During Pandemic (2020-2022) | Period-specific slice |
+| Post-Pandemic (2023-2025) | Period-specific slice |
+| Forecast Phase 1 (2026-2030) | First 5-year forecast |
+| Forecast Phase 2 (2031-2035) | Second 5-year forecast |
+| Summary by Region | Aggregated statistics |
 
 ---
 
-## 📄 License
+## 6. Repository Structure
 
-This project is licensed under the MIT License.
+```
+publication-forecast-project/
+│
+├── data/
+│   ├── raw/
+│   │   ├── MASTER DATASET PRODUCTIVITY.xlsx   # Source data (read-only)
+│   │   └── Sample Visual.jpg                  # Reference visualization
+│   └── processed/
+│       ├── clean_metrics.parquet              # ETL output
+│       └── forecasts.parquet                  # Final dataset with projections
+│
+├── src/
+│   ├── etl.py              # Excel parsing with multi-header support
+│   │                       # Functions: load_raw_data(), melt_to_long_format()
+│   │
+│   ├── forecasting.py      # Statsmodels-based forecasting engine
+│   │                       # Functions: holts_linear_trend(), forecast_series()
+│   │                       # Includes discrete rounding for count metrics
+│   │
+│   └── viz_utils.py        # Geographic utilities and Plotly helpers
+│                           # Contains: REGION_COORDINATES, plot_philippine_map()
+│
+├── app.py                  # Streamlit dashboard entry point
+│                           # Features: ALL filters, period comparison, geospatial map, Excel export
+│
+├── main.py                 # Pipeline orchestrator
+│                           # Executes: ETL → Forecasting in sequence
+│
+├── pyproject.toml          # Dependency manifest (managed by uv)
+├── uv.lock                 # Reproducible dependency lockfile
+├── prd.md                  # Product requirements document
+└── README.md               # This documentation
+```
+
+### Module Responsibilities
+
+| Module | Primary Responsibility | Key Exports |
+|--------|------------------------|-------------|
+| `src/etl.py` | Data ingestion and transformation | `load_and_transform()` |
+| `src/forecasting.py` | Time-series model application | `run_forecasting_pipeline()`, `DISCRETE_METRICS` |
+| `src/viz_utils.py` | Philippine geographic constants and maps | `REGION_COORDINATES`, `plot_philippine_map()` |
+| `app.py` | User interface, visualization, and export | Streamlit application |
+| `main.py` | Pipeline orchestration | CLI entry point |
 
 ---
 
-## 📧 Contact
+## 7. Technical Specifications
 
-For questions or support, please open an issue in the repository.
+### System Requirements
+
+| Requirement | Specification |
+|-------------|---------------|
+| Python Version | 3.12+ |
+| Package Manager | uv (recommended) |
+| Memory | ≥ 4GB RAM |
+| Storage | ≥ 100MB for processed data |
+
+### Performance Characteristics
+
+| Operation | Approximate Duration | Output Size |
+|-----------|---------------------|-------------|
+| ETL Pipeline | ~3 seconds | 10 KB (Parquet) |
+| Forecasting | ~5 seconds | 25 KB (Parquet) |
+| Dashboard Launch | ~2 seconds | N/A |
+| Excel Export | ~1 second | ~500 KB |
+
+### Forecast Accuracy Considerations
+
+> **Disclaimer:** The forecasts generated by IRAP are statistical projections based on historical trends. They do not account for:
+> - Policy changes in research funding
+> - Institutional strategic initiatives
+> - External economic factors
+> - Changes in publication venue standards
+>
+> Users should treat forecasts as **indicative scenarios** rather than definitive predictions.
+
+---
+
+## License
+
+MIT License
+
+---
+
+## Citation
+
+If using IRAP for academic research, please cite:
+
+```
+Institutional Research Analytics Platform (IRAP). (2026).
+Philippine HEI Research Productivity Forecasting System.
+https://github.com/<repository>
+```
 
 ---
 
 <div align="center">
-  <sub>Built with ❤️ for Philippine Higher Education Research Analytics</sub>
+<sub>Developed for Philippine Higher Education Research Analytics</sub>
 </div>

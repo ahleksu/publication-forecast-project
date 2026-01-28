@@ -24,6 +24,9 @@ FORECAST_HORIZON = FORECAST_END - FORECAST_START + 1  # 10 years
 # Minimum non-zero data points required for Holt's method
 MIN_HISTORY_POINTS = 3
 
+# Metrics that should be rounded to integers (discrete counts)
+DISCRETE_METRICS = ["Publication Quantity", "Citation Quantity"]
+
 
 def load_clean_data(path: Path = PROCESSED_DATA_PATH) -> pd.DataFrame:
     """Load the cleaned metrics parquet file.
@@ -157,6 +160,11 @@ def generate_forecasts(df: pd.DataFrame) -> pd.DataFrame:
     
     # Clip negative forecasts to 0 (counts can't be negative)
     result.loc[result["Value"] < 0, "Value"] = 0.0
+    
+    # Round discrete metrics to nearest integer
+    for metric in DISCRETE_METRICS:
+        mask = result["Metric"] == metric
+        result.loc[mask, "Value"] = result.loc[mask, "Value"].round(0)
     
     return result
 
