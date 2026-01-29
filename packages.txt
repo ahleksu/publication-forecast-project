@@ -1,2 +1,0 @@
-# System-level packages for Streamlit Cloud
-# Add packages here if needed (e.g., libgl1 for rendering issues)
