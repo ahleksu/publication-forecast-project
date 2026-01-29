@@ -112,7 +112,10 @@ def create_bubble_map(
             zoom=PH_DEFAULT_ZOOM
         ),
         margin=dict(l=0, r=0, t=50, b=0),
-        template="plotly_dark"
+        paper_bgcolor='white',
+        plot_bgcolor='white',
+        font=dict(color='black'),
+        template="plotly_white"
     )
     
     return fig
@@ -191,7 +194,10 @@ def plot_philippine_map(
                 zoom=PH_DEFAULT_ZOOM
             ),
             margin=dict(l=0, r=0, t=50, b=0),
-            template="plotly_dark"
+            paper_bgcolor='white',
+            plot_bgcolor='white',
+            font=dict(color='black'),
+            template="plotly_white"
         )
         return fig
     
@@ -241,16 +247,16 @@ def plot_philippine_map(
             ],
             showscale=True,
             colorbar=dict(
-                title=dict(text=metric, font=dict(size=12)),
+                title=dict(text=metric, font=dict(size=12, color='black')),
                 thickness=15,
                 len=0.7,
-                bgcolor="rgba(0,0,0,0.5)",
-                tickfont=dict(color="white")
+                bgcolor="rgba(255,255,255,0.8)",
+                tickfont=dict(color='black')
             )
         ),
         text=region_data["Region Code"],
         textposition="middle center",
-        textfont=dict(size=10, color="white", family="Arial Black"),
+        textfont=dict(size=10, color='#333333', family="Arial Black"),
         hovertemplate=(
             "<b>%{customdata[0]}</b><br>"
             f"Region Code: %{{text}}<br>"
@@ -267,18 +273,20 @@ def plot_philippine_map(
     fig.update_layout(
         title=dict(
             text=chart_title,
-            font=dict(size=18, color="#4ECDC4"),
+            font=dict(size=18, color='#1a365d'),  # Dark blue for light mode
             x=0.5,
             xanchor="center"
         ),
         mapbox=dict(
-            style="carto-darkmatter",
+            style="carto-positron",
             center=PH_CENTER,
             zoom=PH_DEFAULT_ZOOM
         ),
-        margin=dict(l=0, r=0, t=60, b=0),
-        template="plotly_dark",
-        paper_bgcolor="#0E1117",
+        margin={"r": 0, "t": 60, "l": 0, "b": 0},
+        paper_bgcolor='white',
+        plot_bgcolor='white',
+        font=dict(color='black'),
+        template="plotly_white",
         height=700
     )
     
@@ -341,7 +349,10 @@ def plot_period_geospatial_comparison(
         fig = go.Figure()
         fig.update_layout(
             title=f"No data available for {metric_name}",
-            template="plotly_dark"
+            paper_bgcolor='white',
+            plot_bgcolor='white',
+            font=dict(color='black'),
+            template="plotly_white"
         )
         return fig
     
@@ -364,7 +375,10 @@ def plot_period_geospatial_comparison(
         fig = go.Figure()
         fig.update_layout(
             title=f"No valid data available for {metric_name}",
-            template="plotly_dark"
+            paper_bgcolor='white',
+            plot_bgcolor='white',
+            font=dict(color='black'),
+            template="plotly_white"
         )
         return fig
     
@@ -395,7 +409,7 @@ def plot_period_geospatial_comparison(
         category_orders={"Period": PERIOD_ORDER},
         zoom=PH_DEFAULT_ZOOM,
         center=PH_CENTER,
-        mapbox_style="carto-darkmatter",
+        mapbox_style="carto-positron",  # Light mode map style
         title=f"Regional Evolution of {metric_name} (Annual Average)",
         color_continuous_scale=[
             [0, "#2E4057"],      # Dark blue
@@ -403,27 +417,30 @@ def plot_period_geospatial_comparison(
             [0.5, "#FFE66D"],    # Yellow
             [0.75, "#FF6B6B"],   # Coral
             [1, "#C44536"]       # Red
-        ],
+        ],  # Original color gradient
         range_color=[0, max_value],  # Fixed scale across all periods
         size_max=50,
     )
     
-    # Premium styling
+    # Premium styling - Light mode
     fig.update_layout(
-        template="plotly_dark",
-        paper_bgcolor="#0E1117",
+        paper_bgcolor='white',
+        plot_bgcolor='white',
+        font=dict(color='black'),
+        template="plotly_white",
         height=700,
         title=dict(
-            font=dict(size=18, color="#4ECDC4"),
+            font=dict(size=18, color='#1a365d'),  # Dark blue for print
             x=0.5,
             xanchor="center"
         ),
         coloraxis_colorbar=dict(
-            title=dict(text=f"Avg {metric_name}", font=dict(size=12)),
+            title=dict(text=f"Avg {metric_name}", font=dict(size=12, color='black')),
             thickness=15,
             len=0.7,
+            tickfont=dict(color='black'),
         ),
-        margin=dict(l=0, r=0, t=60, b=0),
+        margin={"r": 0, "t": 60, "l": 0, "b": 0},
         # Animation settings
         updatemenus=[dict(
             type="buttons",
@@ -444,12 +461,12 @@ def plot_period_geospatial_comparison(
         )]
     )
     
-    # Update slider styling
+    # Update slider styling - Light mode
     if fig.layout.sliders:
         fig.layout.sliders[0].update(
             currentvalue=dict(
                 prefix="Period: ",
-                font=dict(size=14, color="#4ECDC4")
+                font=dict(size=14, color='#1a365d')  # Dark blue for print
             ),
             len=0.8,
             x=0.1,
