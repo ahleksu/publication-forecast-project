@@ -1,0 +1,323 @@
+%% Philippine Higher Education Research Outlook (2025–2035)
+%% LaTeX Document for PDF Export
+%% Generated: January 2026 | Author: IRAP System
+
+\documentclass[11pt, a4paper]{article}
+
+% ===== PACKAGES =====
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{longtable}
+\usepackage{float}
+
+% ===== PAGE SETUP =====
+\geometry{margin=1in}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textit{Philippine HEI Research Outlook}}
+\fancyhead[R]{\textit{2025–2035}}
+\fancyfoot[C]{\thepage}
+
+% ===== COLORS =====
+\definecolor{irapPrimary}{RGB}{78, 205, 196}
+\definecolor{irapDark}{RGB}{14, 17, 23}
+\definecolor{irapAccent}{RGB}{255, 107, 107}
+
+% ===== TITLE FORMAT =====
+\titleformat{\section}{\Large\bfseries\color{irapPrimary}}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+
+% ===== HYPERLINKS =====
+\hypersetup{
+    colorlinks=true,
+    linkcolor=irapPrimary,
+    urlcolor=irapAccent
+}
+
+% ===== DOCUMENT START =====
+\begin{document}
+
+% ----- TITLE PAGE -----
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Huge\bfseries Philippine Higher Education\\[0.3cm]Research Outlook (2025–2035)}
+    
+    \vspace{1cm}
+    {\Large\itshape A Strategic Forecasting Report for HEI Research Productivity}
+    
+    \vspace{2cm}
+    
+    \begin{tabular}{ll}
+        \textbf{Generated Date:} & January 2026 \\
+        \textbf{Author:} & IRAP System (Integrated Research Analytics Platform) \\
+        \textbf{Classification:} & Executive Briefing Document \\
+    \end{tabular}
+    
+    \vfill
+    
+    {\small Prepared for HEI Stakeholders \& Academic Leadership}
+\end{titlepage}
+
+% ----- TABLE OF CONTENTS -----
+\tableofcontents
+\newpage
+
+% ===== ABSTRACT =====
+\section*{Abstract}
+\addcontentsline{toc}{section}{Abstract}
+
+This report provides a comprehensive analysis of research productivity trends across Philippine Higher Education Institutions (HEIs) from 2015 to 2025, with strategic projections extending to 2035. The study employs a \textbf{Pandemic-Aware Forecasting Framework} that explicitly accounts for the structural disruption caused by COVID-19 (2020–2022), ensuring that long-term projections are not contaminated by pandemic-induced volatility. Using Holt's Linear Trend method with Simple Moving Average fallback, we project continued growth in research output across most regions, with notable variations in publication quality as measured by Field-Weighted Citation Impact (FWCI).
+
+\newpage
+
+% ===== METHODOLOGY =====
+\section{Methodology}
+
+\subsection{The COVID-19 Structural Break}
+
+The COVID-19 pandemic (2020–2022) introduced a \textbf{structural break} in research productivity data. This period was characterized by:
+
+\begin{itemize}
+    \item Laboratory closures and field research delays
+    \item Transition to remote work affecting collaborative projects
+    \item Publication pipeline disruptions and journal backlogs
+    \item Reallocation of institutional resources to pandemic response
+\end{itemize}
+
+We treat 2020–2022 as a distinct analytical period to isolate pandemic effects from underlying growth trends.
+
+\subsection{Temporal Segmentation Framework}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llll}
+\toprule
+\textbf{Period} & \textbf{Years} & \textbf{Duration} & \textbf{Characterization} \\
+\midrule
+Pre-Pandemic & 2015–2019 & 5 years & Established baseline trends \\
+During Pandemic & 2020–2022 & 3 years & High volatility / Disruption \\
+Post-Pandemic & 2023–2025 & 3 years & ``New Normal'' recovery \\
+Forecast Phase 1 & 2026–2030 & 5 years & Short-term projection \\
+Forecast Phase 2 & 2031–2035 & 5 years & Long-term projection \\
+\bottomrule
+\end{tabular}
+\caption{Strategic Period Definitions}
+\end{table}
+
+\subsection{Algorithm Selection Logic}
+
+The forecasting engine dynamically selects the appropriate model based on data density:
+
+\begin{verbatim}
+For each (School, Metric):
+    Count non-zero observations in training period (2015–2025)
+    
+    IF n >= 3 non-zero points:
+        -> Apply Holt's Linear Trend (captures momentum)
+    ELSE:
+        -> Apply Simple Moving Average (conservative estimate)
+\end{verbatim}
+
+\subsection{Holt's Linear Trend Method}
+
+For institutions with sufficient historical data ($\geq 3$ non-zero observations), we apply \textbf{Holt's Exponential Smoothing} (double exponential smoothing):
+
+\vspace{0.5cm}
+\textbf{Level Equation:}
+\begin{equation}
+L_t = \alpha Y_t + (1 - \alpha)(L_{t-1} + T_{t-1})
+\end{equation}
+
+\textbf{Trend Equation:}
+\begin{equation}
+T_t = \beta (L_t - L_{t-1}) + (1 - \beta) T_{t-1}
+\end{equation}
+
+\textbf{Forecast Equation:}
+\begin{equation}
+\hat{Y}_{t+h} = L_t + h \cdot T_t
+\end{equation}
+
+\noindent Where:
+\begin{itemize}[noitemsep]
+    \item $Y_t$ = Observed value at time $t$
+    \item $L_t$ = Estimated level at time $t$
+    \item $T_t$ = Estimated trend at time $t$
+    \item $\alpha$ = Smoothing parameter for level ($0 < \alpha < 1$, optimized via MLE)
+    \item $\beta$ = Smoothing parameter for trend ($0 < \beta < 1$, optimized via MLE)
+    \item $h$ = Forecast horizon (years ahead)
+\end{itemize}
+
+\textbf{Implementation:} \texttt{statsmodels.tsa.holtwinters.Holt}
+
+\subsection{Simple Moving Average (Fallback)}
+
+For institutions with sparse data ($< 3$ non-zero observations), Holt's method risks overfitting or producing unstable forecasts. We apply a \textbf{$k$-period Simple Moving Average}:
+
+\begin{equation}
+\hat{Y}_{t+h} = \frac{1}{k}\sum_{i=t-k+1}^{t} Y_i
+\end{equation}
+
+\noindent Where:
+\begin{itemize}[noitemsep]
+    \item $k = \min(3, n)$ where $n$ is the number of available observations
+    \item This produces a conservative, flat projection that avoids explosive or negative forecasts
+\end{itemize}
+
+\subsection{Post-Processing Constraints}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Constraint} & \textbf{Implementation} & \textbf{Rationale} \\
+\midrule
+Non-negativity & $\max(0, \text{forecast})$ & Counts cannot be negative \\
+Discrete rounding & \texttt{round()} for count metrics & Publications/Citations are integers \\
+Continuous FWCI & No rounding & FWCI is a calculated ratio \\
+\bottomrule
+\end{tabular}
+\caption{Post-Processing Rules}
+\end{table}
+
+\subsection{Concrete Example: Benguet State University}
+
+Consider \textbf{Benguet State University (BSU)} in the Cordillera Administrative Region:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{cc}
+\toprule
+\textbf{Year} & \textbf{Publications} \\
+\midrule
+2023 & 45 \\
+2024 & 52 \\
+2025 & 58 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Since BSU has $\geq 3$ non-zero observations, \textbf{Holt's Linear Trend} is applied.
+
+After model fitting:
+\begin{itemize}[noitemsep]
+    \item $L_{2025} = 58$ (current level)
+    \item $T_{2025} = 6.5$ (annual growth rate)
+\end{itemize}
+
+\textbf{2026 Forecast:}
+\begin{equation}
+\hat{Y}_{2026} = L_{2025} + 1 \cdot T_{2025} = 58 + 6.5 = 64.5 \approx 65 \text{ publications}
+\end{equation}
+
+\textbf{2030 Forecast} ($h = 5$):
+\begin{equation}
+\hat{Y}_{2030} = 58 + 5 \times 6.5 = 90.5 \approx 91 \text{ publications}
+\end{equation}
+
+\vspace{0.5cm}
+\textit{Note: For institutions with fewer than 3 historical data points, we fallback to Simple Moving Average to provide conservative estimates.}
+
+\newpage
+
+% ===== SUMMARY STATISTICS =====
+\section{Summary Statistics by Period}
+
+\textit{[Insert Table: Total Research Output by Period]}
+
+\newpage
+
+% ===== GEOSPATIAL ANALYSIS =====
+\section{Geospatial Analysis}
+
+The regional evolution of research productivity is visualized across five strategic periods. Color intensity and bubble size represent \textbf{average annual values} per region.
+
+\subsection{Publication Quantity}
+
+\textit{[Insert Map: Regional Publication Quantity Evolution]}
+
+\subsection{Citation Quantity}
+
+\textit{[Insert Map: Regional Citation Quantity Evolution]}
+
+\subsection{Field-Weighted Citation Impact (FWCI)}
+
+\textit{[Insert Map: Regional FWCI Evolution]}
+
+\newpage
+
+% ===== FORECAST DATA =====
+\section{Complete Forecast Data (2026–2035)}
+
+The table below presents forecasted values for all schools, organized in wide format by metric and year.
+
+\textit{[Insert Table: Complete Forecast Data]}
+
+\textbf{Table Structure:}
+\begin{itemize}[noitemsep]
+    \item Region Code
+    \item Region
+    \item School
+    \item Publication Quantity 2026–2035 (10 columns)
+    \item Citation Quantity 2026–2035 (10 columns)
+    \item Field-Weighted Citation Impact 2026–2035 (10 columns)
+\end{itemize}
+
+\newpage
+
+% ===== STRATEGIC OUTLOOK =====
+\section{Strategic Outlook}
+
+\subsection{Key Insights}
+
+\begin{enumerate}
+    \item \textbf{Regional Concentration Risk}\\
+    NCR continues to dominate national research output. Strategic investments in regional research centers can diversify the national research portfolio.
+    
+    \item \textbf{Quantity vs. Quality Trade-off}\\
+    Regions with high publication growth but low FWCI should prioritize quality assurance mechanisms.
+    
+    \item \textbf{Post-Pandemic Recovery}\\
+    The 2023–2025 recovery period shows resilient institutional capacity.
+    
+    \item \textbf{Emerging Research Hubs}\\
+    Regions showing steep growth trajectories represent opportunities for targeted capacity-building.
+\end{enumerate}
+
+\subsection{Recommended Actions}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Priority} & \textbf{Action Item} \\
+\midrule
+High & Establish regional research consortia \\
+High & Implement FWCI-based incentive structures \\
+Medium & Develop pandemic-resilient research continuity plans \\
+Low & Monitor forecast accuracy and recalibrate annually \\
+\bottomrule
+\end{tabular}
+\caption{Strategic Action Items}
+\end{table}
+
+\vspace{1cm}
+\hrule
+\vspace{0.5cm}
+\textit{This report was generated by the IRAP System. Data sourced from CHED and Scopus databases.}
+
+\vspace{0.5cm}
+\textbf{Disclaimer:} These forecasts are statistical projections based on historical trends. They do not account for policy changes, institutional initiatives, or external economic factors. Treat as indicative scenarios.
+
+\end{document}
