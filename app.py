@@ -402,12 +402,12 @@ def main():
     
     # === Main Analysis Tabs ===
     analysis_tab1, analysis_tab2, analysis_tab3 = st.tabs([
-        "📈 Time Series Analysis", 
         "🗺️ Geospatial Analysis",
+        "📈 Time Series Analysis", 
         "📊 Period Comparison"
     ])
     
-    with analysis_tab1:
+    with analysis_tab2:
         if selected_metric == "All Metrics":
             # Show separate charts for each metric
             for metric in df["Metric"].unique():
@@ -431,16 +431,16 @@ def main():
             )
             st.plotly_chart(fig, use_container_width=True)
     
-    with analysis_tab2:
+    with analysis_tab1:
         display_metric = selected_metric if selected_metric != "All Metrics" else "Publication Quantity"
         st.subheader(f"🗺️ Regional {display_metric} Distribution")
         
-        # View mode toggle
+        # View mode toggle - default to Period Evolution
         view_mode = st.radio(
             "📊 View Mode",
-            ["Yearly Slider", "Period Evolution"],
+            ["Period Evolution", "Yearly Slider"],
             horizontal=True,
-            help="Yearly Slider: View one year at a time. Period Evolution: Animated comparison across all 5 strategic periods."
+            help="Period Evolution: Animated comparison across all 5 strategic periods. Yearly Slider: View one year at a time."
         )
         
         if view_mode == "Yearly Slider":

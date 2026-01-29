@@ -12,7 +12,7 @@ import pandas as pd
 # === Philippine Geographic Constants ===
 # Center coordinates for the Philippines
 PH_CENTER = {"lat": 12.8797, "lon": 121.7740}
-PH_DEFAULT_ZOOM = 5
+PH_DEFAULT_ZOOM = 4.5
 
 # Region Code to Geographic Coordinates Mapping
 # Coordinates represent approximate regional centroids
@@ -279,7 +279,7 @@ def plot_philippine_map(
         margin=dict(l=0, r=0, t=60, b=0),
         template="plotly_dark",
         paper_bgcolor="#0E1117",
-        height=600
+        height=700
     )
     
     return fig
@@ -412,7 +412,7 @@ def plot_period_geospatial_comparison(
     fig.update_layout(
         template="plotly_dark",
         paper_bgcolor="#0E1117",
-        height=650,
+        height=700,
         title=dict(
             font=dict(size=18, color="#4ECDC4"),
             x=0.5,
