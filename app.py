@@ -435,6 +435,12 @@ def main():
         display_metric = selected_metric if selected_metric != "All Metrics" else "Publication Quantity"
         st.subheader(f"🗺️ Regional {display_metric} Distribution")
         
+        # Apply region filter for map data
+        if selected_region != "All Regions":
+            map_df = df[df["Region"] == selected_region]
+        else:
+            map_df = df
+        
         # View mode toggle - default to Period Evolution
         view_mode = st.radio(
             "📊 View Mode",
@@ -444,15 +450,20 @@ def main():
         )
         
         if view_mode == "Yearly Slider":
-            # Original yearly slider implementation
-            min_year = int(df["Year"].min())
-            max_year = int(df["Year"].max())
+            # Calculate year range based on period filter
+            if selected_period != "All Periods":
+                period_start, period_end = PERIODS[selected_period]
+                min_year = period_start
+                max_year = period_end
+            else:
+                min_year = int(df["Year"].min())
+                max_year = int(df["Year"].max())
             
             map_year = st.slider(
                 "📅 Select Year",
                 min_value=min_year,
                 max_value=max_year,
-                value=min(2025, max_year),
+                value=min(max_year, max(min_year, 2025)),  # Default to 2025 or stay within range
                 step=1,
                 help="Slide to view regional distribution for different years"
             )
@@ -470,38 +481,60 @@ def main():
             else:
                 st.warning(f"🔮 **Forecasted Data** for {map_year} | Period: {year_period}")
             
-            # Render the map
+            # Render the map with filtered data
             with st.spinner("Loading map..."):
                 map_fig = plot_philippine_map(
-                    df,
+                    map_df,
                     year=map_year,
                     metric=display_metric,
                     title=f"{display_metric} by Region ({map_year})"
                 )
                 st.plotly_chart(map_fig, use_container_width=True)
             
-            # Regional summary for selected year
+            # Regional summary for selected year (sorted from highest to lowest)
             st.markdown("##### Regional Summary (Top 5)")
-            regional_summary = df[
-                (df["Year"] == map_year) & (df["Metric"] == display_metric)
+            regional_summary = map_df[
+                (map_df["Year"] == map_year) & (map_df["Metric"] == display_metric)
             ].groupby("Region")["Value"].sum().sort_values(ascending=False).head(5)
             
             if not regional_summary.empty:
                 col1, col2 = st.columns([2, 1])
                 with col1:
-                    st.bar_chart(regional_summary)
+                    # Create bar chart with explicit sorting
+                    summary_sorted = regional_summary.reset_index()
+                    summary_sorted.columns = ["Region", display_metric]
+                    bar_fig = px.bar(
+                        summary_sorted,
+                        x="Region",
+                        y=display_metric,
+                        title="Top 5 Regions",
+                        template="plotly_dark",
+                        color=display_metric,
+                        color_continuous_scale=["#2E4057", "#4ECDC4", "#FFE66D"]
+                    )
+                    bar_fig.update_layout(
+                        xaxis={"categoryorder": "total descending"},
+                        showlegend=False,
+                        coloraxis_showscale=False
+                    )
+                    st.plotly_chart(bar_fig, use_container_width=True)
                 with col2:
-                    st.dataframe(regional_summary.reset_index().rename(
-                        columns={"Region": "Region", "Value": display_metric}
-                    ), use_container_width=True)
+                    st.dataframe(summary_sorted, use_container_width=True)
         
         else:
             # Period Evolution - animated bubble map
-            st.info("🎬 **Period Evolution View**: Animated comparison across all 5 strategic periods. "
-                   "Use the Play button or slider to navigate through periods.")
+            # Apply period filter if selected
+            if selected_period != "All Periods":
+                period_start, period_end = PERIODS[selected_period]
+                period_map_df = map_df[(map_df["Year"] >= period_start) & (map_df["Year"] <= period_end)]
+                st.info(f"🎬 **Period View**: Showing data for {selected_period}")
+            else:
+                period_map_df = map_df
+                st.info("🎬 **Period Evolution View**: Animated comparison across all 5 strategic periods. "
+                       "Use the Play button or slider to navigate through periods.")
             
             with st.spinner("Generating animated map..."):
-                period_fig = plot_period_geospatial_comparison(df, display_metric)
+                period_fig = plot_period_geospatial_comparison(period_map_df, display_metric)
                 st.plotly_chart(period_fig, use_container_width=True)
             
             st.markdown("""
@@ -526,11 +559,17 @@ def main():
         
         display_metric_period = selected_metric if selected_metric != "All Metrics" else "Publication Quantity"
         
+        # Apply region filter for period comparison
+        if selected_region != "All Regions":
+            period_comparison_df = df[df["Region"] == selected_region]
+        else:
+            period_comparison_df = df
+        
         # Calculate period summaries
         period_data = []
         for period_name, (start, end) in PERIODS.items():
-            period_df = df[(df["Year"] >= start) & (df["Year"] <= end) & 
-                          (df["Metric"] == display_metric_period)]
+            period_df = period_comparison_df[(period_comparison_df["Year"] >= start) & (period_comparison_df["Year"] <= end) & 
+                          (period_comparison_df["Metric"] == display_metric_period)]
             total = period_df["Value"].sum()
             avg_per_year = period_df.groupby("Year")["Value"].sum().mean()
             period_data.append({
