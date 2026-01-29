@@ -8,3 +8,10 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Environment variables
+.env
+
+# Keep these for Streamlit Cloud deployment
+# requirements.txt
+# packages.txt
