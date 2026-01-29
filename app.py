@@ -61,17 +61,52 @@ def export_to_excel(df: pd.DataFrame) -> bytes:
     """
     output = BytesIO()
     
+    def create_wide_format(data: pd.DataFrame) -> pd.DataFrame:
+        """Convert long format to wide: Metric Year columns."""
+        wide = data.pivot_table(
+            index=['Region Code', 'Region', 'School'],
+            columns=['Year', 'Metric'],
+            values='Value',
+            aggfunc='first'
+        )
+        
+        # Flatten MultiIndex columns: "Publication 2015", "CIT 2015", "FWCI 2015"
+        def abbrev_metric(m):
+            if 'Publication' in m: return 'Publication'
+            elif 'Citation' in m: return 'CIT'
+            else: return 'FWCI'
+        
+        wide.columns = [f"{abbrev_metric(metric)} {year}" for year, metric in wide.columns]
+        
+        # Order columns by year then Publication/CIT/FWCI
+        years = sorted(set(int(c.split()[-1]) for c in wide.columns))
+        ordered_cols = []
+        for year in years:
+            for prefix in ['Publication', 'CIT', 'FWCI']:
+                col = f"{prefix} {year}"
+                if col in wide.columns:
+                    ordered_cols.append(col)
+        
+        return wide[ordered_cols].reset_index().sort_values(['Region Code', 'School'])
+    
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         # Full dataset
         df.to_excel(writer, sheet_name='Complete Data', index=False)
         
-        # Historical only
+        # Historical only (long format)
         historical = df[df["Type"] == "History"]
         historical.to_excel(writer, sheet_name='Historical (2015-2025)', index=False)
         
-        # Forecast only
+        # Forecast only (long format)
         forecast = df[df["Type"] == "Forecast"]
         forecast.to_excel(writer, sheet_name='Forecast (2026-2035)', index=False)
+        
+        # Wide format worksheets
+        historical_wide = create_wide_format(historical)
+        historical_wide.to_excel(writer, sheet_name='Historical Figures', index=False)
+        
+        forecast_wide = create_wide_format(forecast)
+        forecast_wide.to_excel(writer, sheet_name='Forecasted Figures', index=False)
         
         # Period-based sheets
         for period_name, (start, end) in PERIODS.items():
@@ -88,6 +123,7 @@ def export_to_excel(df: pd.DataFrame) -> bytes:
         summary.to_excel(writer, sheet_name='Summary by Region', index=False)
     
     return output.getvalue()
+
 
 
 def create_time_series_chart(

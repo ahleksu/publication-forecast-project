@@ -165,6 +165,12 @@ def clean_values(df: pd.DataFrame) -> pd.DataFrame:
     """
     df = df.copy()
     
+    # === Region Code Corrections ===
+    # CARAGA REGION is incorrectly coded as 'REGION VIII' in source data
+    # The correct code is 'REGION XIII' (Caraga)
+    caraga_mask = df["Region"].str.upper().str.contains("CARAGA", na=False)
+    df.loc[caraga_mask, "Region Code"] = "REGION XIII"
+    
     # Convert Value column: replace hyphens, empty strings, and NaN with 0
     df["Value"] = df["Value"].replace(["-", " - ", ""], pd.NA)
     df["Value"] = pd.to_numeric(df["Value"], errors="coerce")

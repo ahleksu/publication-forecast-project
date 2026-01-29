@@ -78,7 +78,41 @@ uv run streamlit run app.py       # Accessible at http://localhost:8501
 uv run python main.py             # Runs ETL + Forecasting sequentially
 ```
 
+### Complete Reproduction Guide
+
+To fully reproduce all outputs from scratch:
+
+```bash
+# 1. Clone and set up environment
+git clone <repository_url>
+cd publication-forecast-project
+uv sync
+
+# 2. Run the complete data pipeline
+uv run python main.py              # ETL + Forecasting → data/processed/
+
+# 3. Launch the interactive dashboard
+uv run streamlit run app.py        # Opens at http://localhost:8501
+
+# 4. Generate the Executive Report notebook
+uv run jupyter lab reports/HEI_Executive_Report.ipynb
+# Then: Run All Cells (Ctrl+Shift+Enter)
+
+# 5. Export to Excel (via dashboard)
+# Navigate to Dashboard → Click "📥 Download Excel Report"
+```
+
+**Expected Outputs:**
+
+| Output | Location | Description |
+|--------|----------|-------------|
+| Clean Data | `data/processed/clean.parquet` | Transformed long-format data |
+| Forecast Data | `data/processed/forecasts.parquet` | 10-year projections (2026–2035) |
+| Excel Report | Downloaded via dashboard | Complete multi-sheet workbook |
+| Executive Report | `reports/HEI_Executive_Report.ipynb` | Methodology + visualizations |
+
 ---
+
 
 ## 3. Data Pipeline Architecture (The ETL)
 
@@ -290,8 +324,10 @@ The dashboard includes a **Download Excel Report** button that generates a compr
 | Sheet Name | Contents |
 |------------|----------|
 | Complete Data | Full dataset (2015–2035, all metrics) |
-| Historical (2015-2025) | Only observed data |
-| Forecast (2026-2035) | Only projected data |
+| Historical (2015-2025) | Only observed data (long format) |
+| Forecast (2026-2035) | Only projected data (long format) |
+| **Historical Figures** | Wide format: `Publication 2015`, `CIT 2015`, `FWCI 2015`, ... |
+| **Forecasted Figures** | Wide format: `Publication 2026`, `CIT 2026`, `FWCI 2026`, ... |
 | Pre-Pandemic (2015-2019) | Period-specific slice |
 | During Pandemic (2020-2022) | Period-specific slice |
 | Post-Pandemic (2023-2025) | Period-specific slice |
